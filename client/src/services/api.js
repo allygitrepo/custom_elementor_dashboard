@@ -13,8 +13,10 @@ export function getApiBaseUrl() {
     return 'http://localhost/Elementor_Dashboard/server/index.php';
   }
 
-  // In production: dynamically resolve relative to current pathname
-  const currentPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/+$/, '');
+  // In production: dynamically resolve root path, stripping index.html and any /admin subpaths
+  let currentPath = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
+  currentPath = currentPath.replace(/\/admin(\/.*)?$/i, '');
+
   return `${window.location.origin}${currentPath}/server/index.php`;
 }
 

@@ -61,6 +61,12 @@ export default function AdminDashboard({ onNavigate }) {
     }
   };
 
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalDeployments = deployments.length;
+  const totalPages = Math.ceil(totalDeployments / pageSize) || 1;
+  const paginatedDeployments = deployments.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Top Banner with Refresh */}
@@ -168,136 +174,137 @@ export default function AdminDashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* Main Grid: Recent Deployments & Live Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
-        {/* Recent Deployments Table */}
-        <div className="glass-card" style={{ padding: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700 }}>Live Deployed Client Domains</h3>
-            <button 
-              onClick={() => onNavigate('licenses')}
-              style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
-            >
-              View All Licenses &rarr;
-            </button>
+      {/* Full-Width Recent Deployments Table */}
+      <div className="glass-card" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 700 }}>Live Deployed Client Domains</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+              Active website instances communicating telemetry with the central server
+            </p>
           </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Client & Key</th>
-                  <th>Bound Domain</th>
-                  <th>IP Address</th>
-                  <th>Last Ping</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deployments.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: 32, color: 'var(--text-dim)' }}>
-                      No domain deployments recorded yet. Keys will appear here once activated on localhost or live servers.
-                    </td>
-                  </tr>
-                ) : (
-                  deployments.map(item => {
-                    const isLocal = item.deployed_domain?.includes('localhost') || item.deployed_domain?.includes('127.0.0.1');
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{item.customer_name}</div>
-                          <div className="key-pill" style={{ marginTop: 4 }}>{item.license_key}</div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {isLocal ? <Laptop size={14} color="#fbbf24" /> : <Globe size={14} color="#34d399" />}
-                            <span style={{ fontWeight: 600 }}>{item.deployed_domain}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.deployed_ip || 'N/A'}</code>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: 12, color: 'var(--text-main)' }}>
-                            {formatDateTime(item.last_ping_date || item.activation_date).date}
-                          </div>
-                          {formatDateTime(item.last_ping_date || item.activation_date).time && (
-                            <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                              {formatDateTime(item.last_ping_date || item.activation_date).time}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <span className={`badge badge-${item.status === 'active' ? 'success' : 'danger'}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <button 
+            onClick={() => onNavigate('licenses')}
+            className="btn-secondary"
+            style={{ fontSize: 13, padding: '7px 14px' }}
+          >
+            View All Licenses &rarr;
+          </button>
         </div>
 
-        {/* Real-Time Activity Log Stream */}
-        <div className="glass-card" style={{ padding: 24, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Activity size={18} color="#818cf8" /> Live Activity
-            </h3>
-            <button 
-              onClick={() => onNavigate('logs')}
-              style={{ background: 'none', border: 'none', color: '#818cf8', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}
-            >
-              Full Log &rarr;
-            </button>
-          </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Client & Key</th>
+                <th>Bound Domain</th>
+                <th>IP Address</th>
+                <th>Last Ping</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedDeployments.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: 36, color: 'var(--text-dim)' }}>
+                    {loading ? 'Loading deployments...' : 'No domain deployments recorded yet. Keys will appear here once activated on localhost or live servers.'}
+                  </td>
+                </tr>
+              ) : (
+                paginatedDeployments.map(item => {
+                  const isLocal = item.deployed_domain?.includes('localhost') || item.deployed_domain?.includes('127.0.0.1');
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{item.customer_name}</div>
+                        <div className="key-pill" style={{ marginTop: 4 }}>{item.license_key}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {isLocal ? <Laptop size={14} color="#fbbf24" /> : <Globe size={14} color="#34d399" />}
+                          <span style={{ fontWeight: 600, color: isLocal ? '#fbbf24' : '#34d399' }}>
+                            {item.deployed_domain}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.deployed_ip || 'N/A'}</code>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: 12, color: 'var(--text-main)' }}>
+                          {formatDateTime(item.last_ping_date || item.activation_date).date}
+                        </div>
+                        {formatDateTime(item.last_ping_date || item.activation_date).time && (
+                          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                            {formatDateTime(item.last_ping_date || item.activation_date).time}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`badge badge-${item.status === 'active' ? 'success' : 'danger'}`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', maxHeight: 420 }}>
-            {activities.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-dim)', fontSize: 13 }}>
-                No recent activity events.
-              </div>
-            ) : (
-              activities.map(log => {
-                const logDt = formatDateTime(log.created_at);
-                return (
-                  <div key={log.id} style={{
-                    padding: 12,
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: 10,
-                    fontSize: 13
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span className={`badge badge-${
-                        log.event_type.includes('success') || log.event_type === 'purchase' || log.event_type === 'domain_bound' 
-                          ? 'success' 
-                          : log.event_type === 'ping' 
-                          ? 'info' 
-                          : 'warning'
-                      }`} style={{ fontSize: 11, padding: '2px 8px' }}>
-                        {log.event_type.replace('_', ' ').toUpperCase()}
-                      </span>
-                      <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                        {logDt.date} {logDt.time}
-                      </span>
-                    </div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>
-                      {log.details || `Key: ${log.license_key || 'N/A'}`}
-                    </div>
-                    {log.domain && (
-                      <div style={{ fontSize: 11, color: '#38bdf8', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                        🌐 {log.domain}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+        {/* Pagination Footer */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid var(--border-color)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: 12,
+          background: 'rgba(255, 255, 255, 0.01)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button 
+              disabled={page <= 1} 
+              onClick={() => setPage(p => Math.max(1, p - 1))} 
+              className="btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: 13, opacity: page <= 1 ? 0.4 : 1, cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  border: page === p ? '1px solid #818cf8' : '1px solid var(--border-color)',
+                  background: page === p ? 'linear-gradient(135deg, #6366f1, #a855f7)' : 'rgba(255,255,255,0.03)',
+                  color: page === p ? '#ffffff' : 'var(--text-muted)',
+                  fontWeight: page === p ? 700 : 500,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button 
+              disabled={page >= totalPages} 
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
+              className="btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: 13, opacity: page >= totalPages ? 0.4 : 1, cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

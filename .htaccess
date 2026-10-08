@@ -1,0 +1,21 @@
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass Authorization Header to PHP in FastCGI / Apache environments
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Allow direct access to server/ backend API without rewriting
+    RewriteRule ^server(/.*)?$ - [L]
+
+    # Serve existing physical files directly (CSS, JS, SVG, images)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route clean SPA URL (/admin, /login, etc.) to index.html
+    RewriteRule ^admin(/.*)?$ index.html [L]
+    RewriteRule ^.*$ index.html [L]
+</IfModule>

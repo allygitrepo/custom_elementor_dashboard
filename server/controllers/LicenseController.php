@@ -133,7 +133,7 @@ class LicenseController {
         $search = trim($_GET['search'] ?? '');
         $status = trim($_GET['status'] ?? '');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $limit = max(1, min(100, (int)($_GET['limit'] ?? 25)));
+        $limit = max(1, min(100, (int)($_GET['limit'] ?? 10)));
         $offset = ($page - 1) * $limit;
 
         $pdo = Database::getConnection();
@@ -141,25 +141,38 @@ class LicenseController {
         $params = [];
 
         if (!empty($search)) {
-            $where[] = "(license_key LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR deployed_domain LIKE ?)";
+            $where[] = "(l.license_key LIKE ? OR l.customer_name LIKE ? OR l.customer_email LIKE ? OR l.deployed_domain LIKE ? OR l.payment_id LIKE ? OR o.payment_id LIKE ?)";
             $searchTerm = "%$search%";
-            $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+            $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
         }
 
         if (!empty($status)) {
-            $where[] = "status = ?";
+            $where[] = "l.status = ?";
             $params[] = $status;
         }
 
         $whereSql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
         // Total count
-        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM licenses $whereSql");
+        $countStmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT l.id) 
+            FROM licenses l 
+            LEFT JOIN orders o ON l.license_key = o.license_key OR l.order_id = o.order_id 
+            $whereSql
+        ");
         $countStmt->execute($params);
         $total = (int)$countStmt->fetchColumn();
 
         // Fetch list
-        $sql = "SELECT * FROM licenses $whereSql ORDER BY id DESC LIMIT $limit OFFSET $offset";
+        $sql = "
+            SELECT l.*, COALESCE(l.payment_id, o.payment_id) AS payment_id, o.amount AS order_amount 
+            FROM licenses l 
+            LEFT JOIN orders o ON l.license_key = o.license_key OR l.order_id = o.order_id 
+            $whereSql 
+            GROUP BY l.id
+            ORDER BY l.id DESC 
+            LIMIT $limit OFFSET $offset
+        ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $licenses = $stmt->fetchAll();
@@ -187,6 +200,7 @@ class LicenseController {
         $email = trim($data['customer_email'] ?? '');
         $phone = trim($data['customer_phone'] ?? '');
         $notes = trim($data['notes'] ?? '');
+        $paymentId = trim($data['payment_id'] ?? '') ?: 'MANUAL';
         $sendEmail = !empty($data['send_email']);
 
         if (empty($name) || empty($email)) {
@@ -198,10 +212,10 @@ class LicenseController {
         $licenseKey = LicenseManager::generateUniqueKey($pdo);
 
         $stmt = $pdo->prepare("
-            INSERT INTO licenses (license_key, customer_name, customer_email, customer_phone, status, notes)
-            VALUES (?, ?, ?, ?, 'active', ?)
+            INSERT INTO licenses (license_key, customer_name, customer_email, customer_phone, status, notes, payment_id)
+            VALUES (?, ?, ?, ?, 'active', ?, ?)
         ");
-        $stmt->execute([$licenseKey, $name, $email, $phone, $notes]);
+        $stmt->execute([$licenseKey, $name, $email, $phone, $notes, $paymentId]);
 
         LicenseManager::logActivity($pdo, $licenseKey, 'manual_create', null, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', "Created manually by admin");
 
@@ -280,6 +294,76 @@ class LicenseController {
             'success' => $result['success'] ?? false,
             'message' => ($result['success'] ?? false) ? 'Email resent successfully!' : 'Failed to send email',
             'details' => $result
+        ]);
+    }
+
+    /**
+     * Admin: Update license details (Customer Name, Customer Email, Activation Date) in real-time
+     */
+    public static function updateDetails(): void {
+        AuthMiddleware::authenticate();
+
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        $id = (int)($data['id'] ?? 0);
+
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Invalid license ID']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM licenses WHERE id = ?");
+        $stmt->execute([$id]);
+        $existing = $stmt->fetch();
+
+        if (!$existing) {
+            echo json_encode(['success' => false, 'error' => 'License not found']);
+            return;
+        }
+
+        $customerName = isset($data['customer_name']) ? trim($data['customer_name']) : $existing['customer_name'];
+        $customerEmail = isset($data['customer_email']) ? trim($data['customer_email']) : $existing['customer_email'];
+        $paymentId = isset($data['payment_id']) ? trim($data['payment_id']) : ($existing['payment_id'] ?? null);
+        
+        $activationDate = $existing['activation_date'];
+        if (array_key_exists('activation_date', $data)) {
+            $rawDate = trim($data['activation_date'] ?? '');
+            if (empty($rawDate) || $rawDate === '—' || $rawDate === 'null') {
+                $activationDate = null;
+            } else {
+                $timestamp = strtotime($rawDate);
+                if ($timestamp !== false) {
+                    $activationDate = date('Y-m-d H:i:s', $timestamp);
+                } else {
+                    $activationDate = $rawDate;
+                }
+            }
+        }
+
+        if (empty($customerName) || empty($customerEmail)) {
+            echo json_encode(['success' => false, 'error' => 'Client name and email cannot be empty']);
+            return;
+        }
+
+        $updateStmt = $pdo->prepare("
+            UPDATE licenses 
+            SET customer_name = ?, customer_email = ?, activation_date = ?, payment_id = ?
+            WHERE id = ?
+        ");
+        $updateStmt->execute([$customerName, $customerEmail, $activationDate, $paymentId, $id]);
+
+        LicenseManager::logActivity($pdo, $existing['license_key'], 'admin_edit', null, $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', "License updated by admin");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'License details updated successfully',
+            'data' => [
+                'id' => $id,
+                'customer_name' => $customerName,
+                'customer_email' => $customerEmail,
+                'activation_date' => $activationDate,
+                'payment_id' => $paymentId
+            ]
         ]);
     }
 

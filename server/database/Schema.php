@@ -32,6 +32,7 @@ class Schema {
                 ping_count INTEGER DEFAULT 0,
                 max_activations INTEGER DEFAULT 1,
                 order_id TEXT DEFAULT NULL,
+                payment_id TEXT DEFAULT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 notes TEXT DEFAULT NULL
             );
@@ -39,6 +40,10 @@ class Schema {
             CREATE INDEX IF NOT EXISTS idx_licenses_email ON licenses(customer_email);
             CREATE INDEX IF NOT EXISTS idx_licenses_domain ON licenses(deployed_domain);
         ");
+
+        try {
+            $pdo->exec("ALTER TABLE licenses ADD COLUMN payment_id TEXT DEFAULT NULL;");
+        } catch (\Throwable $e) {}
 
         // 3. Password Resets Table
         $pdo->exec("
@@ -102,4 +107,17 @@ class Schema {
             $insertStmt->execute(['vatsalparmar1742002@gmail.com', $defaultHash, 'Vatsal Parmar']);
         }
     }
+
+    public static function migrate(PDO $pdo): void {
+        try {
+            $cols = $pdo->query("PRAGMA table_info(licenses)")->fetchAll(PDO::FETCH_ASSOC);
+            $colNames = array_column($cols, 'name');
+            if (!in_array('payment_id', $colNames)) {
+                $pdo->exec("ALTER TABLE licenses ADD COLUMN payment_id TEXT DEFAULT NULL;");
+            }
+        } catch (\Throwable $e) {
+            // Ignore migration error if column exists or fails gracefully
+        }
+    }
 }
+

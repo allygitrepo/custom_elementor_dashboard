@@ -19,9 +19,11 @@ class Database {
                 self::$pdo->exec("PRAGMA foreign_keys = ON;");
                 self::$pdo->exec("PRAGMA journal_mode = WAL;");
 
+                require_once __DIR__ . '/Schema.php';
                 if ($isNew) {
-                    require_once __DIR__ . '/Schema.php';
                     Schema::initialize(self::$pdo);
+                } else {
+                    Schema::migrate(self::$pdo);
                 }
             } catch (PDOException $e) {
                 die(json_encode([

@@ -9,6 +9,17 @@ export default function AdminLogin({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getPublicStoreUrl = () => {
+    const origin = window.location.origin;
+    const rootPath = window.location.pathname.replace(/\/admin(\/.*)?$/i, '').replace(/\/+$/, '');
+    return `${origin}${rootPath}/#/`;
+  };
+
+  const handleBackToPublic = (e) => {
+    e.preventDefault();
+    window.location.href = getPublicStoreUrl();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -145,7 +156,11 @@ export default function AdminLogin({ onLoginSuccess }) {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <a href="#/" style={{ fontSize: 13, color: 'var(--text-dim)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <a
+            href={getPublicStoreUrl()}
+            onClick={handleBackToPublic}
+            style={{ fontSize: 13, color: 'var(--text-dim)', display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+          >
             &larr; Back to Public Store
           </a>
         </div>

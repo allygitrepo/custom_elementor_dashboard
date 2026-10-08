@@ -6,9 +6,54 @@ require_once __DIR__ . '/../core/LicenseManager.php';
 require_once __DIR__ . '/../core/EmailService.php';
 
 class PaymentController {
+    public static function getActivePrice(): float {
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare("SELECT value FROM settings WHERE key = 'product_price_inr' LIMIT 1");
+            $stmt->execute();
+            $val = $stmt->fetchColumn();
+            if ($val !== false && $val !== null && is_numeric($val) && (float)$val > 0) {
+                return (float)$val;
+            }
+        } catch (\Throwable $e) {}
+
+        return (float)Config::get('PRODUCT_PRICE_INR', 499);
+    }
+
+    public static function getPrice(): void {
+        $price = self::getActivePrice();
+        echo json_encode([
+            'success' => true,
+            'price' => $price,
+            'formatted' => '₹' . number_format($price)
+        ]);
+    }
+
+    public static function updatePrice(): void {
+        AuthMiddleware::authenticate();
+        $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+        $price = (float)($data['price'] ?? 0);
+
+        if ($price <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Please enter a valid price greater than 0']);
+            return;
+        }
+
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("INSERT INTO settings (key, value, updated_at) VALUES ('product_price_inr', ?, datetime('now')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')");
+        $stmt->execute([(string)$price]);
+
+        echo json_encode([
+            'success' => true,
+            'price' => $price,
+            'formatted' => '₹' . number_format($price),
+            'message' => "Live price updated to ₹" . number_format($price) . " successfully!"
+        ]);
+    }
+
     public static function createOrder(): void {
         $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-        $amount = (float)($data['amount'] ?? Config::get('PRODUCT_PRICE_INR', 499));
+        $amount = self::getActivePrice(); // Dynamically enforces admin-configured price
         $customerName = trim($data['name'] ?? '');
         $customerEmail = trim($data['email'] ?? '');
         $customerPhone = trim($data['phone'] ?? '');

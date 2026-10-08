@@ -14,6 +14,22 @@ export default function LandingPage() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('canvas');
   const [demoActive, setDemoActive] = useState(false);
+  const [productPrice, setProductPrice] = useState(499);
+
+  // Fetch real-time active price configured by admin
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const res = await api.get('product/price');
+        if (res.success && res.price) {
+          setProductPrice(Number(res.price));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchPrice();
+  }, []);
 
   // Load Razorpay Script
   useEffect(() => {
@@ -43,7 +59,7 @@ export default function LandingPage() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        amount: 499
+        amount: productPrice
       });
 
       if (!res.success) {
@@ -127,7 +143,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="public-site" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#090d16', color: '#f8fafc' }}>
       {/* Top Navigation Bar */}
       <header style={{
         position: 'sticky',
@@ -172,23 +188,6 @@ export default function LandingPage() {
             >
               <Download size={16} /> Buy License
             </button>
-            <a 
-              href="#/admin" 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 13,
-                color: '#38bdf8',
-                background: 'rgba(56, 189, 248, 0.1)',
-                padding: '8px 14px',
-                borderRadius: 8,
-                border: '1px solid rgba(56, 189, 248, 0.25)',
-                fontWeight: 600
-              }}
-            >
-              <Lock size={14} /> Admin Portal
-            </a>
           </div>
         </div>
       </header>
@@ -252,7 +251,7 @@ export default function LandingPage() {
               className="gradient-btn"
               style={{ fontSize: 16, padding: '15px 32px' }}
             >
-              <Zap size={18} /> Buy Instant License — ₹499
+              <Zap size={18} /> Buy Instant License — ₹{productPrice.toLocaleString('en-IN')}
             </button>
             <a 
               href="#demo"
@@ -514,7 +513,7 @@ export default function LandingPage() {
             </div>
 
             <div style={{ fontSize: 54, fontWeight: 800, margin: '16px 0', color: '#f8fafc' }}>
-              ₹499 <span style={{ fontSize: 16, color: 'var(--text-dim)', fontWeight: 500 }}>/ one-time</span>
+              ₹{productPrice.toLocaleString('en-IN')} <span style={{ fontSize: 16, color: 'var(--text-dim)', fontWeight: 500 }}>/ one-time</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'left', margin: '30px 0' }}>
@@ -628,7 +627,7 @@ export default function LandingPage() {
 
               <div style={{ background: '#0b0f19', padding: 14, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Amount:</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#38bdf8' }}>₹499 INR</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#38bdf8' }}>₹{productPrice.toLocaleString('en-IN')} INR</span>
               </div>
 
               <button 
@@ -637,7 +636,7 @@ export default function LandingPage() {
                 className="gradient-btn"
                 style={{ width: '100%', padding: '14px', fontSize: 15, marginTop: 8 }}
               >
-                {loading ? <RefreshCw size={18} className="animate-spin" /> : <><Zap size={16} /> Pay ₹499 via Razorpay</>}
+                {loading ? <RefreshCw size={18} className="animate-spin" /> : <><Zap size={16} /> Pay ₹{productPrice.toLocaleString('en-IN')} via Razorpay</>}
               </button>
             </form>
           </div>

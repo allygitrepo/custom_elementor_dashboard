@@ -58,9 +58,20 @@ try {
             echo json_encode([
                 'success' => true,
                 'razorpay_key_id' => RazorpayService::getKeyId(),
-                'product_price_inr' => (float)Config::get('PRODUCT_PRICE_INR', 499),
+                'product_price_inr' => PaymentController::getActivePrice(),
                 'product_name' => Config::get('PRODUCT_NAME', 'Custom Elementor & Site Builder Suite')
             ]);
+            break;
+
+        // Product Pricing
+        case 'product/price':
+        case 'api/product/price':
+            PaymentController::getPrice();
+            break;
+
+        case 'admin/settings/price':
+        case 'api/admin/settings/price':
+            PaymentController::updatePrice();
             break;
 
         // Auth
@@ -115,6 +126,11 @@ try {
         case 'admin/licenses/status':
         case 'api/admin/licenses/status':
             LicenseController::updateStatus();
+            break;
+
+        case 'admin/licenses/update':
+        case 'api/admin/licenses/update':
+            LicenseController::updateDetails();
             break;
 
         case 'admin/licenses/resend-email':
