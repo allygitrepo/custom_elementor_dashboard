@@ -195,7 +195,7 @@ export default function AdminZipManager() {
                 </div>
                 <div>
                   <h3 style={{ fontSize: 18, fontWeight: 700 }}>
-                    {zipInfo?.filename || 'Site_Builder_v2_29_09_26.zip'}
+                    {zipInfo?.filename || 'site_builder.zip'}
                   </h3>
                   <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
                     Default Distribution Package

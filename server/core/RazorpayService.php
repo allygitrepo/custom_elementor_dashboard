@@ -25,27 +25,66 @@ class RazorpayService {
             'payment_capture' => 1
         ];
 
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_USERPWD, $keyId . ':' . $keySecret);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        $response = false;
+        $httpCode = 0;
+        $errorMessage = '';
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_USERPWD, $keyId . ':' . $keySecret);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Accept: application/json']);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
 
-        if ($curlError) {
-            return ['success' => false, 'error' => $curlError];
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlError) {
+                $errorMessage = $curlError;
+            }
+        }
+
+        if (!$response) {
+            $auth = base64_encode($keyId . ':' . $keySecret);
+            $options = [
+                'http' => [
+                    'method' => 'POST',
+                    'header' => [
+                        "Authorization: Basic $auth",
+                        "Content-Type: application/json",
+                        "Accept: application/json"
+                    ],
+                    'content' => json_encode($payload),
+                    'timeout' => 15,
+                    'ignore_errors' => true
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false
+                ]
+            ];
+            $context = stream_context_create($options);
+            $response = @file_get_contents($url, false, $context);
+            if (isset($http_response_header) && !empty($http_response_header)) {
+                if (preg_match('#HTTP/\S+\s+(\d+)#', $http_response_header[0], $matches)) {
+                    $httpCode = (int)$matches[1];
+                }
+            }
+        }
+
+        if (!$response) {
+            return ['success' => false, 'error' => $errorMessage ?: 'Unable to connect to Razorpay server'];
         }
 
         $data = json_decode($response, true);
         if ($httpCode >= 200 && $httpCode < 300 && isset($data['id'])) {
-            return ['success' => true, 'order' => $data, 'key_id' => $keyId];
+            return ['success' => true, 'order' => $data, 'key_id' => $keyId, 'amount' => $amountInSubunits, 'currency' => $currency];
         }
 
         return ['success' => false, 'error' => $data['error']['description'] ?? 'Razorpay order creation failed'];

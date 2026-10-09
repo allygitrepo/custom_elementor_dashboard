@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LandingPage from './pages/LandingPage';
+import DownloadPortal from './pages/DownloadPortal';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminForgotPassword from './pages/admin/AdminForgotPassword';
 import AdminResetPassword from './pages/admin/AdminResetPassword';
@@ -15,14 +16,18 @@ import { getSavedTheme, applyAdminTheme, applyPublicTheme } from './services/the
 function getRouteState() {
   const hash = (window.location.hash || '').toLowerCase();
   const path = (window.location.pathname || '').toLowerCase();
+  const segments = path.split('/').filter(Boolean);
 
-  if (hash.includes('admin/forgot-password') || path.includes('admin/forgot-password')) {
+  if (hash.includes('download') || path.includes('download') || hash.includes('portal') || segments.includes('download') || segments.includes('portal')) {
+    return 'download-portal';
+  }
+  if (hash.includes('admin/forgot-password') || path.includes('admin/forgot-password') || hash.includes('forgot-password') || path.includes('forgot-password')) {
     return 'admin-forgot';
   }
-  if (hash.includes('admin/reset-password') || path.includes('admin/reset-password')) {
+  if (hash.includes('admin/reset-password') || path.includes('admin/reset-password') || hash.includes('reset-password') || path.includes('reset-password')) {
     return 'admin-reset';
   }
-  if (hash.startsWith('#/admin') || path.endsWith('/admin') || path.endsWith('/admin/') || path.includes('/admin/')) {
+  if (hash.includes('admin') || segments.includes('admin') || path.endsWith('/admin') || path.endsWith('/admin/') || path.includes('/admin/')) {
     return 'admin';
   }
   return 'landing';
@@ -119,6 +124,10 @@ export default function App() {
         {adminTab === 'settings' && <AdminSettings />}
       </AdminLayout>
     );
+  }
+
+  if (routeType === 'download-portal') {
+    return <DownloadPortal />;
   }
 
   // Default: Public Marketing Landing Page

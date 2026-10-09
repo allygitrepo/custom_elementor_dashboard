@@ -329,7 +329,7 @@ export default function AdminSettings() {
           <div>
             <label style={{ fontSize: 12, color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>Product Distribution</label>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-main)', marginTop: 4 }}>
-              Site_Builder_v2_29_09_26.zip
+              site_builder.zip
             </div>
           </div>
 

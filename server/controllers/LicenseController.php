@@ -18,6 +18,11 @@ class LicenseController {
         return strtolower(trim($domain));
     }
 
+    private static function isLocalHostDomain(string $domain): bool {
+        $d = strtolower(trim($domain));
+        return empty($d) || $d === 'localhost' || $d === '127.0.0.1' || str_ends_with($d, '.local') || str_ends_with($d, '.test') || str_ends_with($d, '.localhost') || str_starts_with($d, 'localhost:') || str_starts_with($d, '127.0.0.1:');
+    }
+
     /**
      * Public API endpoint called by client Site Builder instances upon launch / verification
      */
@@ -73,22 +78,24 @@ class LicenseController {
 
         // Domain binding & Single-Domain lock enforcement
         $existingDomain = !empty($license['deployed_domain']) ? self::normalizeDomain($license['deployed_domain']) : '';
+        $isLocalTesting = self::isLocalHostDomain($existingDomain) && self::isLocalHostDomain($domain);
 
-        if (empty($existingDomain)) {
-            // First time activation: bind domain permanently
+        if (empty($existingDomain) || $isLocalTesting) {
+            // First time activation or local development environment testing: bind/update domain
             $updateStmt = $pdo->prepare("
                 UPDATE licenses 
                 SET deployed_domain = ?, deployed_ip = ?, deployed_url = ?, 
-                    activation_date = datetime('now'), last_ping_date = datetime('now'),
-                    ping_count = 1
+                    activation_date = COALESCE(activation_date, datetime('now')), 
+                    last_ping_date = datetime('now'),
+                    ping_count = COALESCE(ping_count, 0) + 1
                 WHERE id = ?
             ");
             $updateStmt->execute([$domain, $ip, $url, $license['id']]);
             $existingDomain = $domain;
 
-            LicenseManager::logActivity($pdo, $key, 'domain_bound', $domain, $ip, "Permanently bound to domain: $domain");
+            LicenseManager::logActivity($pdo, $key, 'domain_bound', $domain, $ip, "Bound to domain: $domain");
         } else {
-            // Check if domain matches the bound domain (Strict Single-Use Policy)
+            // Check if domain matches the bound domain (Strict Single-Use Policy for live production domains)
             if ($existingDomain !== $domain) {
                 LicenseManager::logActivity($pdo, $key, 'activation_rejected', $domain, $ip, "Attempted to use key on '$domain', but key is already locked to '$existingDomain'");
                 echo json_encode([

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Shield, Zap, Globe, Download, CheckCircle2, Lock, ArrowRight, 
-  Sparkles, Layers, RefreshCw, Copy, Check, Terminal, ExternalLink,
-  Laptop, Server, Mail, Star, ShieldCheck, Play
+  Sparkles, Layers, RefreshCw, Copy, Check, ExternalLink,
+  Laptop, Server, Mail, Star, ShieldCheck, Play, Video,
+  ChevronRight, Menu, X, HelpCircle, Code2, Rocket, Key,
+  Palette, Cpu, Compass
 } from 'lucide-react';
+import WebCraftLogo from '../components/WebCraftLogo';
 import { api, getApiBaseUrl } from '../services/api';
 
 export default function LandingPage() {
@@ -12,26 +15,27 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState('canvas');
-  const [demoActive, setDemoActive] = useState(false);
-  const [productPrice, setProductPrice] = useState(499);
+  const [productPrice, setProductPrice] = useState(299);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeDemoTab, setActiveDemoTab] = useState('canvas');
+  const [openFaq, setOpenFaq] = useState(null);
 
   // Fetch real-time active price configured by admin
   useEffect(() => {
     const fetchPrice = async () => {
       try {
         const res = await api.get('product/price');
-        if (res.success && res.price) {
+        if (res && res.success && res.price) {
           setProductPrice(Number(res.price));
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching dynamic price:', err);
       }
     };
     fetchPrice();
   }, []);
 
-  // Load Razorpay Script
+  // Load Razorpay Script dynamically
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -75,8 +79,8 @@ export default function LandingPage() {
         key: razorpayKey,
         amount: res.amount,
         currency: res.currency || 'INR',
-        name: 'Custom Elementor Site Builder',
-        description: 'Lifetime License & Site Builder Package',
+        name: 'WebCraft Studio',
+        description: 'Lifetime Standalone License & Visual Builder Package',
         image: 'https://cdn-icons-png.flaticon.com/512/919/919830.png',
         order_id: res.order_id,
         prefill: {
@@ -85,7 +89,7 @@ export default function LandingPage() {
           contact: formData.phone || ''
         },
         theme: {
-          color: '#6366f1'
+          color: '#4f46e5'
         },
         handler: async function (response) {
           // 3. Verify order on backend
@@ -142,588 +146,1134 @@ export default function LandingPage() {
     return `${base}?route=zip/download${keyParam}`;
   };
 
+  const scrollToSection = (id) => {
+    setMobileMenuOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const faqs = [
+    {
+      q: 'Does WebCraft Studio require WordPress or MySQL to run?',
+      a: 'No! WebCraft Studio is a 100% standalone visual site builder and deployment suite. It runs instantly on any local server (XAMPP/WAMP) or live hosting (cPanel, DirectAdmin, VPS) with zero database setup required.'
+    },
+    {
+      q: 'How do I receive my 6-digit license key and ZIP download?',
+      a: 'Delivery is 100% automated and instant. As soon as your Razorpay payment completes, your unique 6-digit license key and ZIP package appear on screen and are simultaneously dispatched to your email inbox with access to your Customer Download Portal.'
+    },
+    {
+      q: 'Can I test and build locally on localhost before deploying to live hosting?',
+      a: 'Yes! Your license activates smoothly on localhost for development and can be deployed directly to your live client domain with automated telemetry bindings.'
+    },
+    {
+      q: 'Is this a one-time payment or a recurring subscription?',
+      a: 'This is a single one-time payment for lifetime access, updates, and commercial usage rights to craft unlimited client websites.'
+    }
+  ];
+
   return (
-    <div className="public-site" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#090d16', color: '#f8fafc' }}>
-      {/* Top Navigation Bar */}
+    <div className="public-site" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050814', color: '#f8fafc' }}>
+      
+      {/* 1. Header & Navigation Bar */}
       <header style={{
         position: 'sticky',
         top: 0,
-        zIndex: 50,
+        zIndex: 100,
         backdropFilter: 'blur(20px)',
-        background: 'rgba(9, 13, 22, 0.85)',
-        borderBottom: '1px solid var(--border-color)',
-        padding: '16px 24px'
+        background: 'rgba(5, 8, 20, 0.9)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '10px 24px',
+        transition: 'all 0.3s ease'
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              boxShadow: '0 0 20px var(--primary-glow)'
-            }}>
-              <Zap size={22} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px' }}>
-                Elementor<span className="gradient-text">ProBuilder</span>
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>LICENSING SUITE</div>
-            </div>
-          </div>
+        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          
+          {/* Brand Logo with Custom WebCraft Symbol */}
+          <a href="#" style={{ textDecoration: 'none' }}>
+            <WebCraftLogo size={34} textSize={17} subtitle="STUDIO" />
+          </a>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <a href="#features" style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 500 }}>Features</a>
-            <a href="#demo" style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 500 }}>Live Demo</a>
-            <a href="#pricing" style={{ fontSize: 14, color: 'var(--text-muted)', fontWeight: 500 }}>Pricing</a>
-            <button 
-              onClick={() => setShowCheckout(true)} 
-              className="gradient-btn"
-              style={{ padding: '8px 18px', fontSize: 14 }}
+          {/* Desktop Nav Links */}
+          <nav className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+            <button onClick={() => scrollToSection('overview')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}>
+              Overview
+            </button>
+            <button onClick={() => scrollToSection('video-showcase')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}>
+              Live Demo & Video
+            </button>
+            <button onClick={() => scrollToSection('benefits')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}>
+              Key Benefits
+            </button>
+            <button onClick={() => scrollToSection('pricing')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}>
+              Pricing
+            </button>
+            <button onClick={() => scrollToSection('faq')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}>
+              FAQ
+            </button>
+          </nav>
+
+          {/* Header Action CTA */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => {
+                const el = document.getElementById('pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else setShowCheckout(true);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4 0%, #4f46e5 50%, #9333ea 100%)',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 18px',
+                borderRadius: 9,
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.3)',
+                transition: 'all 0.2s'
+              }}
             >
-              <Download size={16} /> Buy License
+              <Zap size={15} />
+              <span>Get Access — ₹{productPrice}</span>
+            </button>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#fff',
+                padding: '8px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'none'
+              }}
+              className="mobile-menu-btn"
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div style={{
+            background: 'rgba(10, 15, 28, 0.98)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            marginTop: 14,
+            borderRadius: 12
+          }}>
+            <button onClick={() => scrollToSection('overview')} style={{ background: 'none', border: 'none', color: '#f8fafc', fontSize: 16, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}>
+              Overview
+            </button>
+            <button onClick={() => scrollToSection('video-showcase')} style={{ background: 'none', border: 'none', color: '#f8fafc', fontSize: 16, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}>
+              Live Demo & Video
+            </button>
+            <button onClick={() => scrollToSection('benefits')} style={{ background: 'none', border: 'none', color: '#f8fafc', fontSize: 16, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}>
+              Key Benefits
+            </button>
+            <button onClick={() => scrollToSection('pricing')} style={{ background: 'none', border: 'none', color: '#f8fafc', fontSize: 16, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}>
+              Pricing & Instant Purchase
+            </button>
+            <button onClick={() => scrollToSection('faq')} style={{ background: 'none', border: 'none', color: '#f8fafc', fontSize: 16, fontWeight: 600, textAlign: 'left', cursor: 'pointer' }}>
+              Frequently Asked Questions
+            </button>
+          </div>
+        )}
       </header>
 
-      {/* Hero Section */}
-      <section style={{ padding: '80px 24px 60px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute',
-          top: '10%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 600,
-          height: 300,
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 80%)',
-          filter: 'blur(60px)',
-          zIndex: 0,
-          pointerEvents: 'none'
-        }} />
-
-        <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      {/* 2. High-Impact Hero Section (Full Viewport Screen) */}
+      <section id="overview" style={{
+        minHeight: 'calc(100vh - 58px)',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '24px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'radial-gradient(ellipse at 50% 10%, rgba(6, 182, 212, 0.15) 0%, rgba(79, 70, 229, 0.12) 40%, rgba(5, 8, 20, 0) 75%)'
+      }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', textAlign: 'center' }}>
+          
+          {/* Brand Pill Badge */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '6px 16px',
-            borderRadius: 9999,
-            background: 'rgba(99, 102, 241, 0.12)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            color: '#818cf8',
-            fontSize: 13,
-            fontWeight: 600,
-            marginBottom: 24
+            gap: 7,
+            padding: '5px 14px',
+            borderRadius: 999,
+            background: 'rgba(6, 182, 212, 0.1)',
+            border: '1px solid rgba(6, 182, 212, 0.3)',
+            marginBottom: 16,
+            boxShadow: '0 0 20px rgba(6, 182, 212, 0.15)'
           }}>
-            <Sparkles size={15} /> 6-Digit Domain Locking Engine & Automated Mailer
+            <Sparkles size={14} color="#38bdf8" />
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#e0f2fe', letterSpacing: '0.3px' }}>
+              Craft Custom Websites • Standalone Visual Builder & Instant Deploy
+            </span>
           </div>
 
+          {/* Main H1 Headline */}
           <h1 style={{
-            fontSize: 'clamp(36px, 5.5vw, 64px)',
+            fontSize: 'clamp(28px, 3.6vw, 44px)',
             fontWeight: 800,
-            lineHeight: 1.15,
-            letterSpacing: '-1.5px',
-            marginBottom: 24
+            lineHeight: 1.18,
+            letterSpacing: '-1px',
+            marginBottom: 14,
+            color: '#ffffff'
           }}>
-            Deploy & Protect Your <br />
-            <span className="gradient-text">Custom Elementor Builder</span>
+            Craft, Customize & Deploy Custom Websites <br />
+            <span style={{
+              background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-block'
+            }}>
+              Directly on Any Server
+            </span>
           </h1>
 
+          {/* Visual Subtitle (Concise, Low Height) */}
           <p style={{
-            fontSize: 'clamp(16px, 2vw, 19px)',
-            color: 'var(--text-muted)',
-            lineHeight: 1.6,
-            maxWidth: 720,
-            margin: '0 auto 36px'
+            fontSize: 'clamp(14px, 1.4vw, 16px)',
+            color: '#94a3b8',
+            maxWidth: 680,
+            margin: '0 auto 22px',
+            lineHeight: 1.5,
+            fontWeight: 400
           }}>
-            Distribute our next-generation Site Builder package with automated 6-digit key generation, instant email delivery, domain telemetry, and central admin control.
+            <strong>WebCraft Studio</strong> delivers a standalone drag-and-drop web creation engine with zero database setup.
+            Buy once, craft custom pages visually, and deploy directly with automated 6-digit key protection.
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <button 
-              onClick={() => setShowCheckout(true)} 
-              className="gradient-btn"
-              style={{ fontSize: 16, padding: '15px 32px' }}
+          {/* Hero Call-to-Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 26 }}>
+            <button
+              onClick={() => {
+                const el = document.getElementById('pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else setShowCheckout(true);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4 0%, #4f46e5 50%, #9333ea 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '13px 26px',
+                borderRadius: 12,
+                fontWeight: 800,
+                fontSize: 15,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 9,
+                boxShadow: '0 6px 24px rgba(6, 182, 212, 0.35)',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
             >
-              <Zap size={18} /> Buy Instant License — ₹{productPrice.toLocaleString('en-IN')}
+              <Zap size={16} />
+              <span>Get WebCraft Studio — ₹{productPrice}</span>
+              <ArrowRight size={16} />
             </button>
-            <a 
-              href="#demo"
-              className="btn-secondary"
-              style={{ fontSize: 16, padding: '15px 28px' }}
+
+            <button
+              onClick={() => scrollToSection('video-showcase')}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                color: '#f8fafc',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                padding: '13px 22px',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                transition: 'background 0.2s'
+              }}
             >
-              <Play size={17} /> Explore Live Preview
-            </a>
+              <Play size={15} color="#38bdf8" />
+              <span>Watch Studio Demo</span>
+            </button>
           </div>
 
-          {/* Quick Metrics Banner */}
+          {/* 4 Trust Highlights (Compact, Fully Visible on First Viewport Horizon) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 16,
-            marginTop: 50,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: 12,
+            maxWidth: 980,
+            margin: '0 auto',
             textAlign: 'left'
           }}>
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ color: '#38bdf8', marginBottom: 8 }}><ShieldCheck size={24} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>100% Unique</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Guaranteed collision-free 6-digit keys</div>
-            </div>
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ color: '#34d399', marginBottom: 8 }}><Globe size={24} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>Domain Telemetry</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Tracks localhost & live server bindings</div>
-            </div>
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ color: '#c084fc', marginBottom: 8 }}><Mail size={24} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>Instant Mailer</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Automated package & key delivery</div>
-            </div>
-            <div className="glass-card" style={{ padding: '20px 24px' }}>
-              <div style={{ color: '#fbbf24', marginBottom: 8 }}><Server size={24} /></div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>Zero Setup DB</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Portable SQLite self-hosted storage</div>
-            </div>
+            {[
+              { icon: ShieldCheck, title: 'Instant 6-Digit Key', desc: 'Collision-free license generated on purchase', color: '#38bdf8' },
+              { icon: Globe, title: 'Direct Deployment', desc: 'Deploy on XAMPP, cPanel, VPS without MySQL', color: '#818cf8' },
+              { icon: Mail, title: 'Instant Mailer', desc: 'Key and ZIP delivered to your inbox & portal', color: '#c084fc' },
+              { icon: Server, title: 'Zero Database Lock-in', desc: 'Powered by embedded SQLite engine', color: '#34d399' },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div key={idx} className="glow-card" style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 11 }}>
+                  <div style={{
+                    width: 32,
+                    minWidth: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: 'rgba(6, 182, 212, 0.1)',
+                    border: '1px solid rgba(6, 182, 212, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: item.color
+                  }}>
+                    <Icon size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc', lineHeight: 1.2 }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3, marginTop: 2 }}>{item.desc}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
         </div>
       </section>
 
-      {/* Interactive Builder Mockup / Demo Section */}
-      <section id="demo" style={{ padding: '60px 24px', background: 'rgba(0,0,0,0.2)' }}>
-        <div style={{ maxWidth: 1150, margin: '0 auto' }}>
+      {/* 3. Dedicated Video & Product Showcase Section */}
+      <section id="video-showcase" style={{
+        padding: '70px 24px',
+        background: 'linear-gradient(180deg, rgba(5, 8, 20, 0.8) 0%, rgba(11, 17, 34, 0.95) 50%, rgba(5, 8, 20, 0.8) 100%)',
+        position: 'relative'
+      }}>
+        <div style={{ maxWidth: 1140, margin: '0 auto' }}>
+          
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div className="badge badge-purple" style={{ marginBottom: 12 }}>INTERACTIVE SHOWCASE</div>
-            <h2 style={{ fontSize: 32, fontWeight: 800 }}>Standalone Visual Site Builder</h2>
-            <p style={{ color: 'var(--text-muted)' }}>Experience how clients interact with the builder once activated with their 6-digit key.</p>
-          </div>
-
-          <div className="glass-card" style={{ overflow: 'hidden', border: '1px solid #334155' }}>
-            {/* Builder Window Header */}
             <div style={{
-              background: '#0b0f19',
-              padding: '12px 20px',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              borderBottom: '1px solid var(--border-color)'
+              gap: 6,
+              padding: '6px 14px',
+              borderRadius: 999,
+              background: 'rgba(6, 182, 212, 0.15)',
+              border: '1px solid rgba(6, 182, 212, 0.3)',
+              color: '#38bdf8',
+              fontSize: 12,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              marginBottom: 14
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ef4444' }} />
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#f59e0b' }} />
-                <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#10b981' }} />
-                <span style={{ fontSize: 13, color: 'var(--text-dim)', marginLeft: 10, fontFamily: 'var(--font-mono)' }}>
-                  Site_Builder_v2_29_09_26 • Status: <span style={{ color: '#34d399' }}>Licensed & Active</span>
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <span className="badge badge-success">Key: 749201</span>
-                <span className="badge badge-info">Domain: localhost</span>
-              </div>
+              <Video size={14} /> Interactive Studio Demonstration
             </div>
-
-            {/* Builder Workplace Simulation */}
-            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 280px', minHeight: 440 }}>
-              {/* Left Widget Sidebar */}
-              <div style={{ background: '#0d121f', borderRight: '1px solid var(--border-color)', padding: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 14 }}>
-                  Widgets & Components
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {['Heading', 'Hero Section', 'Image Grid', 'Buttons', 'Contact Form', 'Slider'].map((item, idx) => (
-                    <div key={idx} style={{
-                      background: '#131a2c',
-                      border: '1px solid var(--border-color)',
-                      padding: '12px 8px',
-                      borderRadius: 8,
-                      textAlign: 'center',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}>
-                      <Layers size={16} style={{ margin: '0 auto 6px', color: '#818cf8' }} />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Canvas */}
-              <div style={{ background: '#090d16', padding: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{
-                  width: '100%',
-                  maxWidth: 480,
-                  background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1))',
-                  border: '2px dashed #6366f1',
-                  borderRadius: 16,
-                  padding: 30,
-                  textAlign: 'center'
-                }}>
-                  <Sparkles size={32} style={{ color: '#a855f7', marginBottom: 12 }} />
-                  <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Live Visual Canvas</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
-                    Drag & drop elements, edit typography, customize colors, and export clean static HTML or WordPress pages.
-                  </p>
-                  <button 
-                    onClick={() => setDemoActive(!demoActive)}
-                    className="gradient-btn"
-                    style={{ fontSize: 13, padding: '8px 18px' }}
-                  >
-                    {demoActive ? '✨ Animations Active' : '▶️ Trigger Live Preview'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Settings Panel */}
-              <div style={{ background: '#0d121f', borderLeft: '1px solid var(--border-color)', padding: 18 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: 14 }}>
-                  Style & Properties
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Accent Gradient</label>
-                    <div style={{ height: 32, borderRadius: 6, background: 'linear-gradient(90deg, #6366f1, #ec4899)', marginTop: 6 }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Layout Spacing</label>
-                    <input type="range" className="input-field" style={{ padding: 0, height: 8, marginTop: 8 }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>License Heartbeat</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#34d399', marginTop: 6 }}>
-                      <CheckCircle2 size={14} /> Telemetry Verified
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section id="features" style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 50 }}>
-            <div className="badge badge-info" style={{ marginBottom: 12 }}>SYSTEM CAPABILITIES</div>
-            <h2 style={{ fontSize: 32, fontWeight: 800 }}>Complete Licensing & Distribution Architecture</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: 600, margin: '0 auto' }}>
-              Engineered for agencies, developers, and theme sellers looking to securely distribute standalone Elementor builders.
+            <h2 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.8px', marginBottom: 12 }}>
+              See WebCraft Studio in Action
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: 15, maxWidth: 620, margin: '0 auto' }}>
+              Experience visual drag-and-drop customization, live style inspections, and instantaneous standalone deployment.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(99,102,241,0.15)', color: '#818cf8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Lock size={22} />
+          {/* Interactive Showcase Mockup Frame */}
+          <div className="video-frame" style={{ maxWidth: 1040, margin: '0 auto', borderColor: 'rgba(6, 182, 212, 0.25)' }}>
+            
+            {/* Top Browser Bar Mockup */}
+            <div style={{
+              background: 'rgba(10, 15, 28, 0.95)',
+              padding: '12px 18px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }}></span>
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }}></span>
+                <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
+                <span style={{ fontSize: 12, color: '#64748b', marginLeft: 12, fontFamily: 'var(--font-mono)' }}>
+                  WebCraft_Studio_v2.0 • Standalone Canvas
+                </span>
               </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>6-Digit Domain Locking Engine</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Every customer receives a cryptographically generated 6-digit key. When deployed on localhost or live servers, the activation gate binds the domain and unlocks the editor.
-              </p>
+
+              {/* Showcase Tabs */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[
+                  { id: 'canvas', label: '🎨 Visual Canvas' },
+                  { id: 'activation', label: '🔑 Instant Activation' },
+                  { id: 'export', label: '⚡ Clean Code Export' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveDemoTab(tab.id)}
+                    style={{
+                      background: activeDemoTab === tab.id ? 'rgba(6, 182, 212, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                      border: activeDemoTab === tab.id ? '1px solid rgba(6, 182, 212, 0.45)' : '1px solid transparent',
+                      color: activeDemoTab === tab.id ? '#e0f2fe' : '#94a3b8',
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(56,189,248,0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Globe size={22} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Domain Telemetry & Live Map</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                The centralized admin dashboard tracks client IPs, domains, heartbeat pings, and deployment dates in real time. Remote suspend or revoke keys with one click.
-              </p>
-            </div>
+            {/* Video / Interactive Canvas Area */}
+            <div style={{
+              position: 'relative',
+              minHeight: 460,
+              background: '#070b18',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '30px 20px',
+              overflow: 'hidden'
+            }}>
+              
+              {/* Tab 1: Visual Canvas Preview */}
+              {activeDemoTab === 'canvas' && (
+                <div style={{ width: '100%', maxWidth: 900, display: 'grid', gridTemplateColumns: '220px 1fr 220px', gap: 16, height: '100%' }}>
+                  
+                  {/* Left Widget Sidebar */}
+                  <div style={{ background: 'rgba(15, 23, 42, 0.8)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 10 }}>
+                      Widgets & Blocks
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      {['Header Block', 'Hero Banner', 'Action Button', 'Feature Matrix', 'Pricing Table', 'Contact Form'].map((w, i) => (
+                        <div key={i} style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px dashed rgba(255,255,255,0.15)',
+                          borderRadius: 8,
+                          padding: '10px 6px',
+                          textAlign: 'center',
+                          fontSize: 11,
+                          color: '#cbd5e1',
+                          cursor: 'grab'
+                        }}>
+                          {w}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(236,72,153,0.15)', color: '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Mail size={22} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Automated Email Dispatch</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Integrated directly with the custom Email Service API. Immediately delivers a beautiful HTML confirmation email with the 6-digit key and direct zip download link.
-              </p>
-            </div>
+                  {/* Center Canvas */}
+                  <div style={{
+                    background: 'radial-gradient(circle at center, rgba(6, 182, 212, 0.12) 0%, rgba(9, 13, 24, 0.95) 100%)',
+                    borderRadius: 12,
+                    border: '1px solid rgba(6, 182, 212, 0.35)',
+                    padding: '32px 24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    position: 'relative'
+                  }}>
+                    <div style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 16,
+                      background: 'linear-gradient(135deg, #06b6d4, #4f46e5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      marginBottom: 16,
+                      boxShadow: '0 0 30px rgba(6, 182, 212, 0.5)'
+                    }}>
+                      <Play size={24} style={{ marginLeft: 3 }} />
+                    </div>
 
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(16,185,129,0.15)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Server size={22} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Zero-Setup SQLite Backend</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                No complex database credentials or MySQL creation needed. Uses high-concurrency WAL-mode SQLite database that self-initializes on first launch.
-              </p>
-            </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc', marginBottom: 6 }}>
+                      WebCraft Studio Visual Canvas
+                    </div>
+                    <p style={{ fontSize: 13, color: '#94a3b8', maxWidth: 360, lineHeight: 1.5, marginBottom: 18 }}>
+                      Craft custom websites visually with real-time style controls and 100% path independence.
+                    </p>
 
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(245,158,11,0.15)', color: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Terminal size={22} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>100% Path-Independent</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                The React client builds with relative assets (<code style={{ color: '#fbbf24' }}>base: './'</code>). Drop the contents into any root domain or subfolder without rewriting code.
-              </p>
-            </div>
+                    <button
+                      onClick={() => setShowCheckout(true)}
+                      style={{
+                        background: 'linear-gradient(135deg, #06b6d4, #4f46e5)',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6
+                      }}
+                    >
+                      <Zap size={14} /> Buy & Launch Studio
+                    </button>
+                  </div>
 
-            <div className="glass-card" style={{ padding: 30 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(168,85,247,0.15)', color: '#c084fc', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-                <Shield size={22} />
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>Admin Recovery & Auth</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Protected admin portal at <code style={{ color: '#c084fc' }}>/#/admin</code> with JWT auth, forgot password tokens, and instant password recovery via email.
-              </p>
+                  {/* Right Style Inspector */}
+                  <div style={{ background: 'rgba(15, 23, 42, 0.8)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: 14 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 10 }}>
+                      Style Inspector
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>ACCENT GRADIENT</div>
+                        <div style={{ height: 16, borderRadius: 4, background: 'linear-gradient(90deg, #06b6d4, #818cf8)' }}></div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>BORDER RADIUS</div>
+                        <input type="range" defaultValue={14} readOnly style={{ width: '100%', accentColor: '#06b6d4' }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: '#34d399', background: 'rgba(16, 185, 129, 0.1)', padding: '6px 8px', borderRadius: 6, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                        ✓ Telemetry Linked
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Tab 2: 6-Digit License Activation */}
+              {activeDemoTab === 'activation' && (
+                <div style={{ maxWidth: 440, width: '100%', background: 'rgba(15, 23, 42, 0.9)', padding: '32px 28px', borderRadius: 16, border: '1px solid rgba(6, 182, 212, 0.35)', textAlign: 'center' }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(6, 182, 212, 0.2)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                    <Key size={24} />
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Enter 6-Digit Access Key</h3>
+                  <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
+                    Received upon purchase. Binds automatically to your domain.
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 18 }}>
+                    {['V', 'T', '4', 'N', '5', 'P'].map((char, i) => (
+                      <div key={i} style={{ width: 42, height: 48, borderRadius: 8, background: '#070c18', border: '1px solid #06b6d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                        {char}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#34d399', fontWeight: 600 }}>
+                    ✓ Status: Activated on localhost / client.domain
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Clean Code Export */}
+              {activeDemoTab === 'export' && (
+                <div style={{ maxWidth: 540, width: '100%', background: '#050811', padding: '24px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)', fontSize: 12, color: '#94a3b8', textAlign: 'left' }}>
+                  <div style={{ color: '#06b6d4', marginBottom: 8 }}>// WebCraft Studio Export Output</div>
+                  <div>&lt;<span style={{ color: '#f43f5e' }}>section</span> <span style={{ color: '#38bdf8' }}>class</span>=<span style={{ color: '#34d399' }}>"webcraft-hero"</span>&gt;</div>
+                  <div style={{ paddingLeft: 16 }}>&lt;<span style={{ color: '#f43f5e' }}>h1</span>&gt;Crafted Without Limits&lt;/<span style={{ color: '#f43f5e' }}>h1</span>&gt;</div>
+                  <div style={{ paddingLeft: 16 }}>&lt;<span style={{ color: '#f43f5e' }}>button</span> <span style={{ color: '#38bdf8' }}>class</span>=<span style={{ color: '#34d399' }}>"btn-craft"</span>&gt;Explore&lt;/<span style={{ color: '#f43f5e' }}>button</span>&gt;</div>
+                  <div>&lt;/<span style={{ color: '#f43f5e' }}>section</span>&gt;</div>
+                  <div style={{ marginTop: 14, color: '#34d399', fontSize: 11 }}>
+                    ✓ 100% Path-Independent HTML/CSS • Instant Load Speeds
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" style={{ padding: '80px 24px', background: 'rgba(0,0,0,0.3)' }}>
-        <div style={{ maxWidth: 650, margin: '0 auto', textAlign: 'center' }}>
-          <div className="badge badge-success" style={{ marginBottom: 12 }}>LIFETIME ACCESS</div>
-          <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12 }}>Simple, Transparent Pricing</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 40 }}>
-            Get instant access to the builder package, 6-digit license key, and full source files.
+      {/* 4. Core Business Benefits (Iconic Grid, Low Reading) */}
+      <section id="benefits" style={{ padding: '80px 24px', maxWidth: 1140, margin: '0 auto', width: '100%' }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: 50 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            borderRadius: 999,
+            background: 'rgba(6, 182, 212, 0.15)',
+            border: '1px solid rgba(6, 182, 212, 0.3)',
+            color: '#38bdf8',
+            fontSize: 12,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            marginBottom: 14
+          }}>
+            <ShieldCheck size={14} /> Crafted For Web Professionals & Agencies
+          </div>
+          <h2 style={{ fontSize: 'clamp(26px, 4vw, 38px)', fontWeight: 800, letterSpacing: '-0.8px', marginBottom: 12 }}>
+            Engineered for Maximum Speed & Freedom
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: 15, maxWidth: 600, margin: '0 auto' }}>
+            Everything you need to craft custom sites and deploy standalone packages instantly.
+          </p>
+        </div>
+
+        {/* 6 High-Impact Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: 24
+        }}>
+          {[
+            {
+              icon: Server,
+              title: 'Zero Database Lock-in',
+              badge: 'Embedded SQLite',
+              color: '#38bdf8',
+              desc: 'No MySQL servers or migrations needed. Runs directly on high-performance embedded SQLite out-of-the-box.'
+            },
+            {
+              icon: Key,
+              title: '6-Digit Domain Locking',
+              badge: 'Automated Security',
+              color: '#818cf8',
+              desc: 'Cryptographic 6-digit license keys automatically lock to client domains or localhost upon first activation.'
+            },
+            {
+              icon: Globe,
+              title: 'Real-Time Domain Telemetry',
+              badge: 'Live Tracking',
+              color: '#34d399',
+              desc: 'Automatic IP detection, binding timestamp, and active status telemetry without intrusive client overhead.'
+            },
+            {
+              icon: Mail,
+              title: 'Instant Automated Mailer',
+              badge: 'Zero Waiting',
+              color: '#c084fc',
+              desc: 'Automated confirmation email delivers your 6-digit access key and direct access to your Customer Portal.'
+            },
+            {
+              icon: Layers,
+              title: '100% Path-Independent',
+              badge: 'Ultra Portable',
+              color: '#fbbf24',
+              desc: 'Extract anywhere—subfolders, local hosts, or root domains. Absolute paths are resolved automatically.'
+            },
+            {
+              icon: ShieldCheck,
+              title: 'Lifetime Commercial Freedom',
+              badge: 'Single Payment',
+              color: '#f43f5e',
+              desc: 'Single license gives you full commercial rights to craft unlimited client landing pages and prototypes.'
+            }
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <div key={idx} className="glow-card" style={{ padding: '28px 24px', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <div style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: `rgba(6, 182, 212, 0.1)`,
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: item.color
+                  }}>
+                    <Icon size={22} />
+                  </div>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: item.color,
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255, 255, 255, 0.08)'
+                  }}>
+                    {item.badge}
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: '#f8fafc' }}>
+                  {item.title}
+                </h3>
+                <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, flex: 1 }}>
+                  {item.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+      </section>
+
+      {/* 5. 3-Step Infographic Flow */}
+      <section id="how-it-works" style={{
+        padding: '70px 24px',
+        background: 'rgba(10, 15, 28, 0.6)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+      }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', textAlign: 'center' }}>
+          
+          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 34px)', fontWeight: 800, marginBottom: 12 }}>
+            Simple 3-Step Deployment Process
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 500, margin: '0 auto 40px' }}>
+            Get your standalone builder running and deployed in under 2 minutes.
           </p>
 
-          <div className="glass-card" style={{ padding: 40, border: '2px solid rgba(99, 102, 241, 0.4)', position: 'relative' }}>
-            <div style={{
-              position: 'absolute',
-              top: -14,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              color: '#fff',
-              padding: '4px 16px',
-              borderRadius: 9999,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 1
-            }}>
-              SPECIAL LAUNCH OFFER
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 20,
+            textAlign: 'left'
+          }}>
+            {[
+              { step: '01', title: 'Instant Purchase', desc: 'Pay securely via Razorpay (Cards/UPI) and receive your 6-digit key + portal link instantly.' },
+              { step: '02', title: 'Drop & Extract', desc: 'Extract the package to your XAMPP, cPanel, or VPS folder. Zero database configuration needed.' },
+              { step: '03', title: 'Activate & Deploy', desc: 'Enter your 6-digit key upon launch. The studio locks to your domain and unlocks the visual canvas.' }
+            ].map((s, idx) => (
+              <div key={idx} className="glow-card" style={{ padding: '24px 20px', position: 'relative' }}>
+                <div style={{
+                  fontSize: 32,
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #06b6d4, #4f46e5)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  marginBottom: 12,
+                  fontFamily: 'var(--font-mono)'
+                }}>
+                  {s.step}
+                </div>
+                <h4 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: '#f8fafc' }}>{s.title}</h4>
+                <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* 6. Dynamic Pricing & Checkout Section */}
+      <section id="pricing" style={{ padding: '90px 24px 70px', position: 'relative' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
+          
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            borderRadius: 999,
+            background: 'rgba(6, 182, 212, 0.15)',
+            border: '1px solid rgba(6, 182, 212, 0.3)',
+            color: '#38bdf8',
+            fontSize: 12,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            marginBottom: 14
+          }}>
+            <Sparkles size={14} /> Lifetime Commercial Access
+          </div>
+
+          <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 40px)', fontWeight: 800, letterSpacing: '-0.8px', marginBottom: 12 }}>
+            Simple, Transparent Pricing
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: 15, marginBottom: 36 }}>
+            Pay once and own the WebCraft Studio package forever.
+          </p>
+
+          {/* Pricing Box Card */}
+          <div className="glow-card" style={{
+            padding: '40px 32px',
+            border: '1px solid rgba(6, 182, 212, 0.4)',
+            boxShadow: '0 20px 60px -15px rgba(6, 182, 212, 0.25)',
+            textAlign: 'left'
+          }}>
+            
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 24, borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc' }}>WebCraft Studio Suite v2.0</div>
+                <div style={{ fontSize: 13, color: '#94a3b8' }}>Lifetime updates & commercial license</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 38, fontWeight: 800, color: '#ffffff', letterSpacing: '-1px', display: 'flex', alignItems: 'center' }}>
+                  ₹{productPrice}
+                </div>
+                <div style={{ fontSize: 11, color: '#38bdf8', fontWeight: 600 }}>One-time payment</div>
+              </div>
             </div>
 
-            <div style={{ fontSize: 14, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600, marginTop: 10 }}>
-              Site Builder Package v2
-            </div>
-
-            <div style={{ fontSize: 54, fontWeight: 800, margin: '16px 0', color: '#f8fafc' }}>
-              ₹{productPrice.toLocaleString('en-IN')} <span style={{ fontSize: 16, color: 'var(--text-dim)', fontWeight: 500 }}>/ one-time</span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'left', margin: '30px 0' }}>
+            {/* Checklist */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
               {[
-                'Full Site Builder v2 (.zip package)',
+                'Full Standalone WebCraft Studio ZIP package',
                 'Unique 6-Digit Collision-Free License Key',
-                'Instant Email Delivery with Download Link',
-                'Deploy on Localhost & Live Servers',
-                'Unlimited Page Exports & Custom Layouts',
-                'Lifetime Updates & Telemetry Support'
-              ].map((feature, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-                  <CheckCircle2 size={18} style={{ color: '#34d399', flexShrink: 0 }} />
+                'Customer Download & Activation Portal Access',
+                'Automatic Localhost & Live Domain Telemetry',
+                'Instant Automated Email Confirmation',
+                'Zero MySQL Database Configuration Required',
+                '100% Path-Independent & Subfolder Portable',
+                'Commercial License — Craft Unlimited Client Pages'
+              ].map((feature, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cbd5e1' }}>
+                  <CheckCircle2 size={16} color="#38bdf8" style={{ minWidth: 16 }} />
                   <span>{feature}</span>
                 </div>
               ))}
             </div>
 
-            <button 
+            {/* Buy CTA Button */}
+            <button
               onClick={() => setShowCheckout(true)}
-              className="gradient-btn"
-              style={{ width: '100%', padding: '16px 24px', fontSize: 16, borderRadius: 12 }}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #06b6d4 0%, #4f46e5 50%, #9333ea 100%)',
+                color: '#ffffff',
+                border: 'none',
+                padding: '16px',
+                borderRadius: 12,
+                fontWeight: 800,
+                fontSize: 16,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                boxShadow: '0 8px 25px rgba(6, 182, 212, 0.4)',
+                transition: 'all 0.2s'
+              }}
             >
-              <Zap size={18} /> Buy Now with Razorpay
+              <Zap size={18} />
+              <span>Buy Now with Razorpay — ₹{productPrice}</span>
             </button>
 
-            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              <ShieldCheck size={14} /> 256-bit Encrypted Checkout • Instant 6-Digit Key
-            </div>
           </div>
+
         </div>
       </section>
 
-      {/* Footer */}
+      {/* 7. FAQ Section */}
+      <section id="faq" style={{ padding: '40px 24px 80px', maxWidth: 840, margin: '0 auto', width: '100%' }}>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 32px)', fontWeight: 800, marginBottom: 8 }}>
+            Frequently Asked Questions
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: 14 }}>
+            Quick answers about installation, licensing, and usage.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {faqs.map((faq, idx) => {
+            const isOpen = openFaq === idx;
+            return (
+              <div 
+                key={idx} 
+                className="glow-card" 
+                style={{ padding: '18px 22px', cursor: 'pointer' }}
+                onClick={() => setOpenFaq(isOpen ? null : idx)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>
+                    {faq.q}
+                  </div>
+                  <ChevronRight 
+                    size={18} 
+                    color="#38bdf8" 
+                    style={{ 
+                      transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                      minWidth: 18
+                    }} 
+                  />
+                </div>
+                {isOpen && (
+                  <p style={{ marginTop: 12, fontSize: 13, color: '#94a3b8', lineHeight: 1.6, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 8. Professional Business Footer */}
       <footer style={{
         marginTop: 'auto',
-        borderTop: '1px solid var(--border-color)',
-        padding: '32px 24px',
-        textAlign: 'center',
-        background: '#070a12',
-        color: 'var(--text-dim)',
-        fontSize: 13
+        background: '#040711',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        padding: '50px 24px 30px'
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={16} style={{ color: '#818cf8' }} />
-            <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>ElementorProBuilder Platform</span>
+        <div style={{ maxWidth: 1140, margin: '0 auto' }}>
+          
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 24,
+            paddingBottom: 30,
+            borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            {/* Logo & Description */}
+            <div style={{ maxWidth: 380 }}>
+              <WebCraftLogo size={34} textSize={17} subtitle="STUDIO" />
+              <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5, marginTop: 12 }}>
+                Next-generation standalone visual website builder & direct deployment studio. Fast, lightweight, and independent.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+              <button onClick={() => scrollToSection('overview')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Overview</button>
+              <button onClick={() => scrollToSection('video-showcase')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Demo</button>
+              <button onClick={() => scrollToSection('benefits')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Benefits</button>
+              <button onClick={() => scrollToSection('pricing')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>Pricing</button>
+              <button onClick={() => scrollToSection('faq')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}>FAQ</button>
+            </div>
           </div>
-          <div>
-            &copy; {new Date().getFullYear()} Custom Elementor & Site Builder Suite. All rights reserved.
+
+          {/* Bottom Copyright & AllySoft Solutions Credit */}
+          <div style={{
+            paddingTop: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+            fontSize: 12,
+            color: '#64748b'
+          }}>
+            <div>
+              © {new Date().getFullYear()} WebCraft Studio. All rights reserved.
+            </div>
+
+            {/* Prominent Footer Credit */}
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'rgba(6, 182, 212, 0.08)',
+              padding: '6px 14px',
+              borderRadius: 8,
+              border: '1px solid rgba(6, 182, 212, 0.25)',
+              color: '#cbd5e1',
+              fontWeight: 600
+            }}>
+              <span>Developed by</span>
+              <strong style={{
+                background: 'linear-gradient(135deg, #38bdf8, #818cf8, #c084fc)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 800
+              }}>
+                AllySoft Solutions
+              </strong>
+            </div>
           </div>
-          <div>
-            <a href="#/admin" style={{ color: '#818cf8', fontWeight: 600 }}>Admin Login &rarr;</a>
-          </div>
+
         </div>
       </footer>
 
-      {/* Checkout Modal */}
+      {/* 9. Razorpay Checkout Modal */}
       {showCheckout && (
         <div className="modal-backdrop" onClick={() => !loading && setShowCheckout(false)}>
-          <div className="glass-card" style={{ maxWidth: 460, width: '100%', padding: 32, background: '#111726' }} onClick={e => e.stopPropagation()}>
+          <div 
+            className="glow-card" 
+            style={{ maxWidth: 460, width: '100%', padding: '32px 28px', background: '#0b0f19', border: '1px solid rgba(6, 182, 212, 0.4)' }}
+            onClick={e => e.stopPropagation()}
+          >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h3 style={{ fontSize: 20, fontWeight: 800 }}>Complete Your Purchase</h3>
-              <button 
-                onClick={() => !loading && setShowCheckout(false)} 
-                style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: 20, cursor: 'pointer' }}
-              >
-                &times;
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <WebCraftLogo size={32} showText={false} />
+                <div>
+                  <h3 style={{ fontSize: 17, fontWeight: 800 }}>Complete Your Purchase</h3>
+                  <p style={{ fontSize: 12, color: '#94a3b8' }}>Amount: <strong style={{ color: '#fff' }}>₹{productPrice}</strong></p>
+                </div>
+              </div>
+              <button onClick={() => setShowCheckout(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}>
+                <X size={20} />
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
-              Enter your details to receive your <strong>6-digit license key</strong> and download link via email.
-            </p>
-
             <form onSubmit={handleCheckoutSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Full Name *</label>
-                <input 
-                  type="text" 
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Your Full Name *</label>
+                <input
+                  type="text"
                   required
-                  placeholder="e.g. John Doe"
                   className="input-field"
+                  placeholder="e.g. John Doe"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Email Address (for key delivery) *</label>
-                <input 
-                  type="email" 
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Email Address (For Key Delivery) *</label>
+                <input
+                  type="email"
                   required
-                  placeholder="e.g. john@example.com"
                   className="input-field"
+                  placeholder="e.g. john@example.com"
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Phone Number (Optional)</label>
-                <input 
-                  type="tel" 
-                  placeholder="e.g. 9876543210"
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 6 }}>Phone Number (Optional)</label>
+                <input
+                  type="tel"
                   className="input-field"
+                  placeholder="e.g. 9876543210"
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
 
-              <div style={{ background: '#0b0f19', padding: 14, borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Total Amount:</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#38bdf8' }}>₹{productPrice.toLocaleString('en-IN')} INR</span>
+              <div style={{ background: 'rgba(6, 182, 212, 0.08)', padding: '10px 14px', borderRadius: 8, fontSize: 12, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ShieldCheck size={16} />
+                <span>Instant automated 6-digit license delivery to your email</span>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
-                className="gradient-btn"
-                style={{ width: '100%', padding: '14px', fontSize: 15, marginTop: 8 }}
+                style={{
+                  background: 'linear-gradient(135deg, #06b6d4 0%, #4f46e5 50%, #9333ea 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '14px',
+                  borderRadius: 10,
+                  fontWeight: 800,
+                  fontSize: 15,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  marginTop: 6
+                }}
               >
-                {loading ? <RefreshCw size={18} className="animate-spin" /> : <><Zap size={16} /> Pay ₹{productPrice.toLocaleString('en-IN')} via Razorpay</>}
+                {loading ? <RefreshCw size={18} className="animate-spin" /> : <><Lock size={16} /> Pay ₹{productPrice} via Razorpay</>}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* Instant Order Success & Email Delivery Confirmation Modal */}
+      {/* 10. Order Success & Key Reveal Modal */}
       {orderSuccess && (
         <div className="modal-backdrop">
-          <div className="glass-card" style={{ maxWidth: 540, width: '100%', padding: 36, background: '#111726', textAlign: 'center' }}>
-            <div style={{
-              width: 64,
-              height: 64,
-              borderRadius: '50%',
-              background: 'rgba(16,185,129,0.15)',
-              color: '#34d399',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px'
-            }}>
-              <CheckCircle2 size={38} />
+          <div 
+            className="glow-card" 
+            style={{ maxWidth: 500, width: '100%', padding: '36px 30px', background: '#0b0f19', border: '1px solid rgba(6, 182, 212, 0.4)', textAlign: 'center' }}
+          >
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(6, 182, 212, 0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', border: '1px solid rgba(6, 182, 212, 0.3)' }}>
+              <CheckCircle2 size={36} />
             </div>
 
-            <h3 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Payment Successful!</h3>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
-              Your order has been completed and processed.
+            <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Payment Successful!</h2>
+            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 24 }}>
+              Your 6-digit access key is ready and has been dispatched to <strong>{formData.email}</strong>.
             </p>
 
-            <div style={{
-              background: '#090d16',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              borderRadius: 12,
-              padding: '20px 24px',
-              textAlign: 'left',
-              marginBottom: 20
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, color: '#38bdf8', fontWeight: 700, fontSize: 15 }}>
-                <Mail size={18} /> Dispatched to Your Email
+            {/* License Key Box */}
+            <div style={{ background: '#050811', padding: '18px', borderRadius: 12, border: '1px dashed rgba(6, 182, 212, 0.4)', marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 8 }}>
+                YOUR 6-DIGIT ACTIVATION KEY
               </div>
-              <p style={{ fontSize: 13, color: '#cbd5e1', lineHeight: 1.6, margin: 0 }}>
-                We have sent your <strong>Site Builder Zip package download link</strong> along with your <strong>unique 6-digit license access key</strong> directly to:
-              </p>
-              <div style={{
-                background: 'rgba(255,255,255,0.05)',
-                padding: '8px 12px',
-                borderRadius: 6,
-                marginTop: 10,
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#38bdf8',
-                fontFamily: 'var(--font-mono)'
-              }}>
-                ✉️ {formData.email || 'your submitted email address'}
+              <div style={{ fontSize: 32, fontWeight: 800, color: '#ffffff', fontFamily: 'var(--font-mono)', letterSpacing: '4px', marginBottom: 12 }}>
+                {orderSuccess.license_key}
               </div>
+              <button
+                onClick={copyLicenseKey}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: copied ? '#38bdf8' : '#fff',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copied ? 'Key Copied!' : 'Copy License Key'}</span>
+              </button>
             </div>
 
-            {/* Important Activation Note */}
-            <div style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: 10,
-              padding: '14px 18px',
-              textAlign: 'left',
-              marginBottom: 24
-            }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#fbbf24', marginBottom: 4 }}>
-                ⚠️ Important Activation Policy:
-              </div>
-              <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.6 }}>
-                You can download the zip package <strong>multiple times</strong> from your email link, but your 6-digit access key can only be activated <strong>one time</strong> (it will be permanently locked to your first deployment domain/localhost).
-              </div>
-            </div>
-
-            <button 
-              onClick={() => {
-                setOrderSuccess(null);
-                setFormData({ name: '', email: '', phone: '' });
+            {/* Direct ZIP Download */}
+            <a
+              href={downloadZipUrl()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'linear-gradient(135deg, #06b6d4 0%, #4f46e5 100%)',
+                color: '#fff',
+                textDecoration: 'none',
+                padding: '14px',
+                borderRadius: 10,
+                fontWeight: 800,
+                fontSize: 15,
+                marginBottom: 16
               }}
-              className="gradient-btn"
-              style={{ width: '100%', padding: '14px', fontSize: 15 }}
             >
-              Done & Return to Store
+              <Download size={18} /> Download WebCraft Studio Package
+            </a>
+
+            {/* Email Dispatch Notice */}
+            <div style={{
+              background: 'rgba(56, 189, 248, 0.08)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              borderRadius: 10,
+              padding: '12px 16px',
+              fontSize: 12.5,
+              color: '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              textAlign: 'left',
+              marginBottom: 16,
+              lineHeight: 1.5
+            }}>
+              <Mail size={22} color="#38bdf8" style={{ minWidth: 22 }} />
+              <div>
+                <span>Your <strong>ZIP package download link</strong> and <strong>license access key</strong> have also been sent to your submitted email: <strong style={{ color: '#38bdf8' }}>{formData.email}</strong>.</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setOrderSuccess(null)}
+              style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13, cursor: 'pointer', marginTop: 8 }}
+            >
+              Close Window
             </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }

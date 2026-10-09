@@ -15,6 +15,8 @@ class EmailService {
             'To' => $toEmail,
             'recipient' => $toEmail,
             'to_name' => $toName ?: $toEmail,
+            'from_name' => 'ElementorBuilder Pro',
+            'sender_name' => 'ElementorBuilder Pro',
             'subject' => $subject,
             'Subject' => $subject,
             'html' => $htmlContent,
@@ -22,6 +24,7 @@ class EmailService {
             'body' => $htmlContent,
             'Body' => $htmlContent,
             'message' => $htmlContent,
+            'text' => strip_tags(str_replace(['<br>', '<br/>', '</p>', '</div>', '</li>'], "\n", $htmlContent)),
             'is_html' => true,
             'isHtml' => true
         ];
@@ -100,67 +103,116 @@ class EmailService {
             return rtrim($appUrl, '/');
         }
 
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $currentUri = $_SERVER['REQUEST_URI'] ?? '/';
-        $baseFolder = explode('/server', $currentUri)[0];
+        $isHttps = false;
+        if (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') {
+            $isHttps = true;
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+            $isHttps = true;
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+            $isHttps = true;
+        } elseif (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) {
+            $isHttps = true;
+        }
+
+        $protocol = $isHttps ? "https://" : "http://";
+        $host = $_SERVER['HTTP_X_FORWARDED_HOST'] ?? ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        if (str_contains($host, ',')) {
+            $host = trim(explode(',', $host)[0]);
+        }
+
+        // Accurately determine the web root subfolder
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        $baseFolder = '';
+        if (str_contains($scriptName, '/server')) {
+            $baseFolder = explode('/server', $scriptName)[0];
+        } else {
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+            $baseFolder = explode('/server', $requestUri)[0];
+        }
+
+        $baseFolder = '/' . trim($baseFolder, '/');
+        if ($baseFolder === '/') {
+            $baseFolder = '';
+        }
+
         return rtrim($protocol . $host . $baseFolder, '/');
     }
 
     public static function sendLicenseEmail(string $customerEmail, string $customerName, string $licenseKey, string $downloadUrl): array {
-        $subject = "🎉 Your Custom Elementor Site Builder License & Download Key: $licenseKey";
-        $productName = Config::get('PRODUCT_NAME', 'Custom Elementor & Site Builder Suite');
+        $subject = "WebCraft Studio - Order Confirmation & License Key [Key: $licenseKey]";
+        $productName = Config::get('PRODUCT_NAME', 'WebCraft Studio');
+        $baseUrl = self::getBaseUrl();
+        $portalUrl = rtrim($baseUrl, '/') . '/#/download?key=' . urlencode($licenseKey);
 
-        $html = '<table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 30px 10px; font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;">
-          <tr>
-            <td align="center">
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
-                <tr>
-                  <td style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); background-color: #6366f1; padding: 32px 24px; text-align: center;">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 800;">Purchase Confirmed!</h1>
-                    <p style="margin: 8px 0 0; color: #e0e7ff; font-size: 14px;">Thank you for purchasing ' . htmlspecialchars($productName) . '</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 32px 24px; color: #e2e8f0;">
-                    <p style="font-size: 16px; color: #f8fafc; margin: 0 0 12px;">Hello <strong>' . htmlspecialchars($customerName) . '</strong>,</p>
-                    <p style="color: #94a3b8; line-height: 1.6; margin: 0 0 24px;">Your unique activation key and builder package are ready. Use this 6-digit key to activate the builder on your localhost or live domain.</p>
-                    
-                    <div style="background-color: #0f172a; border: 2px dashed #6366f1; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0;">
-                      <div style="font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; font-weight: 700;">Your Unique 6-Digit License Key</div>
-                      <div style="font-size: 38px; font-weight: 800; color: #38bdf8; letter-spacing: 6px; margin: 10px 0; font-family: monospace;">' . htmlspecialchars($licenseKey) . '</div>
-                      <div style="font-size: 12px; color: #64748b;">Keep this key safe. It will be required during activation.</div>
-                    </div>
+        $html = '<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>' . htmlspecialchars($subject) . '</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 40px 15px;">
+            <tr>
+              <td align="center">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px 24px; text-align: center;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;">Order Confirmation</h1>
+                      <p style="margin: 6px 0 0; color: #e0e7ff; font-size: 14px;">Thank you for your purchase of ' . htmlspecialchars($productName) . '</p>
+                    </td>
+                  </tr>
 
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="' . htmlspecialchars($downloadUrl) . '" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 15px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 14px rgba(99,102,241,0.4);" target="_blank">⬇️ Download Site Builder Zip</a>
-                    </div>
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 32px 28px; color: #334155;">
+                      <p style="font-size: 15px; color: #1e293b; margin: 0 0 14px; font-weight: 600;">Dear ' . htmlspecialchars($customerName) . ',</p>
+                      <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">Your order has been completed successfully. Your standalone site builder package and activation key are ready for immediate use.</p>
+                      
+                      <!-- 6-Digit Key Box -->
+                      <div style="background-color: #f8fafc; border: 2px dashed #6366f1; border-radius: 10px; padding: 22px 16px; text-align: center; margin: 24px 0;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #6366f1; letter-spacing: 1px; font-weight: 700;">YOUR 6-DIGIT ACTIVATION KEY</div>
+                        <div style="font-size: 36px; font-weight: 800; color: #0f172a; letter-spacing: 6px; margin: 10px 0; font-family: Consolas, Monaco, monospace;">' . htmlspecialchars($licenseKey) . '</div>
+                        <div style="font-size: 12px; color: #64748b;">Save this key. You will need it to activate the builder on your domain.</div>
+                      </div>
 
-                    <div style="background-color: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 14px 18px; margin: 20px 0; text-align: left;">
-                      <div style="font-size: 13px; font-weight: 700; color: #fbbf24; margin-bottom: 4px;">⚠️ Activation Policy Notice:</div>
-                      <div style="font-size: 12px; color: #cbd5e1; line-height: 1.5;">You can download the zip package <strong>multiple times</strong> from the button above, but your 6-digit access key can only be activated <strong>one time</strong> (it will be locked to your first target domain/localhost upon activation).</div>
-                    </div>
+                      <!-- Primary Portal Action Button -->
+                      <div style="text-align: center; margin: 30px 0 20px;">
+                        <a href="' . htmlspecialchars($portalUrl) . '" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);" target="_blank">Access License & Download Portal &rarr;</a>
+                      </div>
 
-                    <div style="background-color: #0f172a; border-radius: 8px; padding: 16px 20px; margin: 24px 0; border: 1px solid #334155;">
-                      <div style="font-weight: 700; color: #f1f5f9; margin-bottom: 8px; font-size: 14px;">Quick Activation Steps:</div>
-                      <ol style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 14px; line-height: 1.8;">
-                        <li>Deploy the zip package onto your server or localhost.</li>
-                        <li>Open the builder URL in your browser.</li>
-                        <li>Enter your 6-digit key: <strong style="color: #38bdf8;">' . htmlspecialchars($licenseKey) . '</strong> on the activation screen.</li>
-                        <li>The system will bind your domain and unlock the full site builder suite!</li>
-                      </ol>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="border-top: 1px solid #334155; padding: 20px 24px; text-align: center; font-size: 12px; color: #64748b; background-color: #111726;">
-                    &copy; ' . date('Y') . ' Custom Elementor & Site Builder Platform. All rights reserved.
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>';
+                      <div style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 24px;">
+                        Direct ZIP mirror: <a href="' . htmlspecialchars($downloadUrl) . '" style="color: #4f46e5; text-decoration: underline;">Download ZIP directly</a>
+                      </div>
+
+                      <!-- Quick Guide -->
+                      <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #e2e8f0; font-size: 13px; color: #475569;">
+                        <div style="font-weight: 700; color: #1e293b; margin-bottom: 8px;">Quick Setup Guide:</div>
+                        <ol style="margin: 0; padding-left: 18px; line-height: 1.7;">
+                          <li>Extract the downloaded ZIP package to your local or live server.</li>
+                          <li>Open the builder URL in your web browser.</li>
+                          <li>Enter your 6-digit key: <strong style="color: #4f46e5;">' . htmlspecialchars($licenseKey) . '</strong> to activate.</li>
+                        </ol>
+                      </div>
+
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="border-top: 1px solid #e2e8f0; padding: 18px 24px; text-align: center; font-size: 12px; color: #94a3b8; background-color: #f8fafc;">
+                      &copy; ' . date('Y') . ' ' . htmlspecialchars($productName) . ' &bull; Developed by AllySoft Solutions
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>';
 
         return self::send($customerEmail, $subject, $html, $customerName);
     }

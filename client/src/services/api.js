@@ -13,9 +13,9 @@ export function getApiBaseUrl() {
     return 'http://localhost/Elementor_Dashboard/server/index.php';
   }
 
-  // In production: dynamically resolve root path, stripping index.html and any /admin subpaths
+  // In production: dynamically resolve root path, stripping index.html, /admin, and /download subpaths
   let currentPath = window.location.pathname.replace(/\/index\.html$/i, '').replace(/\/+$/, '');
-  currentPath = currentPath.replace(/\/admin(\/.*)?$/i, '');
+  currentPath = currentPath.replace(/\/(admin|download)(\/.*)?$/i, '');
 
   return `${window.location.origin}${currentPath}/server/index.php`;
 }

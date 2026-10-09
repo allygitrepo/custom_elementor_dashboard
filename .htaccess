@@ -10,12 +10,16 @@ DirectoryIndex index.html index.php
     # Allow direct access to server/ backend API without rewriting
     RewriteRule ^server(/.*)?$ - [L]
 
+    # Map subpath asset requests (e.g. /admin/assets/* or /download/assets/*) back to root assets
+    RewriteRule ^(.+/)?assets/(.*)$ assets/$2 [L]
+    RewriteRule ^(.+/)?(favicon\.svg|icons\.svg)$ $2 [L]
+
     # Serve existing physical files directly (CSS, JS, SVG, images)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Route clean SPA URL (/admin, /login, etc.) to index.html
-    RewriteRule ^admin(/.*)?$ index.html [L]
-    RewriteRule ^.*$ index.html [L]
+    # Route all clean SPA URLs (/admin, /download, etc.) to index.html
+    RewriteRule ^ index.html [L]
 </IfModule>
+
